@@ -1,740 +1,118 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>zigme - 지금, 내 감정에 불을 켜다</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ["Noto Sans KR", "system-ui", "sans-serif"],
-            serif: ["Noto Serif KR", "serif"]
-          },
-          boxShadow: {
-            neon: "0 0 20px rgba(56,189,248,.5), 0 0 54px rgba(244,114,182,.32)"
-          }
-        }
-      }
-    };
-  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>zigme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Noto+Serif+KR:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: #080812; color: white; font-family: "Noto Sans KR", system-ui, sans-serif; }
-    body { overflow-x: hidden; }
-    .glass { background: rgba(15, 23, 42, .74); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(18px); }
-    .soft-grid {
-      background-image:
-        radial-gradient(circle at 20% 12%, rgba(244,114,182,.18), transparent 30%),
-        radial-gradient(circle at 88% 18%, rgba(45,212,191,.16), transparent 28%),
-        radial-gradient(circle at 50% 100%, rgba(250,204,21,.12), transparent 36%),
-        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
-      background-size: auto, auto, auto, 42px 42px, 42px 42px;
-    }
-    .neon-ring { position: relative; isolation: isolate; }
-    .neon-ring::before {
-      content: "";
-      position: absolute;
-      inset: -12px;
-      border-radius: 9999px;
-      background: conic-gradient(from 90deg, #22d3ee, #f472b6, #fde047, #34d399, #22d3ee);
-      filter: blur(18px);
-      opacity: .76;
-      z-index: -1;
-      animation: spin 6s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulseGlow {
-      0%, 100% { transform: scale(1); filter: brightness(1); }
-      50% { transform: scale(1.03); filter: brightness(1.14); }
-    }
-    .pulse-glow { animation: pulseGlow 2.8s ease-in-out infinite; }
-    .safe-bottom { padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:#080812;color:#fff;font-family:"Noto Sans KR",system-ui,sans-serif}
+    button{font-family:inherit}
+    .preload{opacity:0;pointer-events:none;position:fixed;top:-9999px;left:-9999px;width:0;height:0;overflow:hidden}
+    .page{min-height:100dvh;padding:20px 14px 28px;background:
+      radial-gradient(circle at 18% 10%,rgba(244,114,182,.2),transparent 30%),
+      radial-gradient(circle at 88% 18%,rgba(45,212,191,.18),transparent 28%),
+      radial-gradient(circle at 50% 100%,rgba(250,204,21,.13),transparent 36%),
+      linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+      background-size:auto,auto,auto,42px 42px,42px 42px;
+      padding-bottom:max(28px,env(safe-area-inset-bottom))}
+    .wrap{max-width:1080px;margin:0 auto}
+    .top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}
+    .logo{font-size:30px;font-weight:900;letter-spacing:0}.tag{font-size:12px;color:#cffafe;margin-top:4px}
+    .pill{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.09);color:white;border-radius:999px;padding:10px 13px;font-weight:900;cursor:pointer}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:16px}
+    .glass{background:rgba(15,23,42,.76);border:1px solid rgba(255,255,255,.13);border-radius:24px;backdrop-filter:blur(18px)}
+    .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px;background:rgba(0,0,0,.25);border-radius:20px}
+    .tab{border:0;border-radius:14px;padding:11px 6px;background:rgba(255,255,255,.07);color:#cbd5e1;font-size:12px;font-weight:900;cursor:pointer}
+    .tab.on{background:#fff;color:#07111f;box-shadow:0 0 18px rgba(56,189,248,.5),0 0 48px rgba(244,114,182,.32)}
+    .panel{margin-top:14px;min-height:360px;padding:22px}
+    .center{min-height:310px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    .big{width:224px;height:224px;border:0;border-radius:999px;background:#080812;color:white;font-size:24px;font-weight:900;line-height:1.22;padding:28px;cursor:pointer;position:relative;isolation:isolate;box-shadow:0 0 20px rgba(56,189,248,.5),0 0 54px rgba(244,114,182,.32)}
+    .big:before{content:"";position:absolute;inset:-12px;border-radius:999px;background:conic-gradient(from 90deg,#22d3ee,#f472b6,#fde047,#34d399,#22d3ee);filter:blur(18px);opacity:.78;z-index:-1;animation:spin 6s linear infinite}
+    .big:disabled{opacity:.55;cursor:not-allowed}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .choice{border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(255,255,255,.08);color:white;padding:16px;text-align:left;font-weight:900;cursor:pointer}
+    .choice.on{background:#f5d0fe;color:#07111f;border-color:#f5d0fe}
+    .choice small{display:block;margin-top:7px;opacity:.76;font-weight:700;line-height:1.35}
+    .m0{background:linear-gradient(135deg,#fde68a,#d9f99d,#bae6fd);color:#07111f}.m1{background:linear-gradient(135deg,#fecdd3,#fbcfe8,#ddd6fe);color:#07111f}.m2{background:linear-gradient(135deg,#bae6fd,#c7d2fe,#e2e8f0);color:#07111f}.m3{background:linear-gradient(135deg,#bbf7d0,#99f6e4,#f5d0fe);color:#07111f}
+    .side{padding:12px}.sideTop{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 12px}.muted{font-size:12px;color:#94a3b8}.live{background:#6ee7b7;color:#07111f;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900}
+    canvas{display:block;width:100%;aspect-ratio:4/5;background:#111827;border-radius:18px}
+    .ad{margin:12px 0;padding:15px;border-radius:18px;background:rgba(17,24,39,.55);text-align:center;font-weight:900;color:#cbd5e1}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{border:0;border-radius:14px;padding:14px 12px;font-weight:900;cursor:pointer}.white{background:#fff;color:#07111f}.cyan{background:#67e8f9;color:#07111f}
+    .footer{display:block;margin-top:16px;border-radius:18px;padding:16px;text-align:center;text-decoration:none;color:#07111f;font-weight:900;background:linear-gradient(90deg,#fde68a,#fbcfe8,#bae6fd);box-shadow:0 0 18px rgba(56,189,248,.28)}
+    .bar{height:8px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden;margin-top:9px}.bar span{display:block;height:100%;background:#67e8f9}
+    .toast{margin-top:13px;border-radius:14px;background:rgba(255,255,255,.1);padding:12px;color:#cffafe;font-weight:800}
+    .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;padding:18px}.box{width:100%;max-width:430px;border-radius:24px;background:rgba(15,23,42,.97);border:1px solid rgba(255,255,255,.14);padding:22px;text-align:center;box-shadow:0 0 20px rgba(56,189,248,.5),0 0 54px rgba(244,114,182,.32)}
+    input{width:100%;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:white;border-radius:14px;padding:14px;margin:12px 0}.count{width:96px;height:96px;margin:0 auto 16px;border-radius:999px;background:linear-gradient(135deg,#67e8f9,#f0abfc,#fde68a);color:#07111f;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:900}.saveimg{width:100%;border-radius:18px;border:1px solid rgba(255,255,255,.2)}.hidden{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+    @media(max-width:860px){.layout{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.tab{font-size:11px}.side{max-width:430px;margin:0 auto;width:100%}}
   </style>
 </head>
 <body>
-  <div style="opacity:0;pointer-events:none;position:fixed;top:-9999px;left:-9999px;height:0;width:0;overflow:hidden;">
-    <span style="font-family:'Noto Serif KR',serif;">지그미 세리프 폰트 사전 로딩</span>
-    <span style="font-family:'Noto Sans KR',sans-serif;">지그미 산세리프 폰트 사전 로딩</span>
-  </div>
-  <div id="root" style="min-height:100dvh;display:flex;align-items:center;justify-content:center;background:#080812;color:white;font-family:system-ui,sans-serif;">
-    zigme 로딩 중
-  </div>
+  <div class="preload"><span style="font-family:'Noto Serif KR',serif">지그미 세리프 폰트 로딩</span><span>지그미 산세리프 폰트 로딩</span></div>
+  <div id="root"><div class="page"><div class="wrap"><div class="logo">zigme</div><p>앱을 여는 중입니다.</p></div></div></div>
 
-  <script type="text/babel">
-    const { useEffect, useMemo, useRef, useState } = window.React;
-
-    const STORAGE_KEY = "zigme_key";
-    const CACHE_KEY = "zigme_recent_text_cache";
-    const COOLDOWN_MS = 30000;
-    const IMAGE_TIMEOUT_MS = 8000;
-
-    const LOCAL_TEMPLATES = [
-      { quote: "지금의 너는 늦은 게 아니라, 정확히 달아오르는 중이야.", subtext: "숨을 고르고 다시 켜지는 카드", prompt: "pastel neon sunrise over quiet city, emotional warmth, cinematic korean mood card" },
-      { quote: "불안은 망했다는 신호가 아니라, 중요한 문 앞에 섰다는 신호야.", subtext: "오늘의 떨림을 연료로", prompt: "soft neon doorway, hopeful atmosphere, pastel blue pink, dreamy light" },
-      { quote: "아무것도 못 한 날에도 너는 버틴 만큼 이미 일을 했다.", subtext: "느린 회복 카드", prompt: "cozy moonlit room, gentle neon lamp, rest and healing, pastel" },
-      { quote: "공허한 마음은 비어 있는 게 아니라, 새 리듬을 기다리는 공간이야.", subtext: "다시 채워질 빈자리", prompt: "minimal pastel neon lake, empty space, calm reflection, elegant" },
-      { quote: "오늘 한 걸음이면 충분해. 불은 작아도 방향을 밝힌다.", subtext: "작은 실행의 불빛", prompt: "single glowing path in pastel neon garden, hopeful cinematic" },
-      { quote: "너의 속도는 느린 게 아니라, 오래 갈 수 있게 조율된 속도야.", subtext: "나만의 박자", prompt: "pastel neon metronome, soft music room, gentle focus" },
-      { quote: "무너진 계획보다 중요한 건, 다시 잡은 손잡이 하나야.", subtext: "리셋 버튼의 밤", prompt: "neon reset button, soft gradient, midnight desk, motivational" },
-      { quote: "지금 켜진 마음 하나면, 오늘은 다시 시작하기에 충분하다.", subtext: "Card ON", prompt: "heart shaped neon light, pastel clouds, clean premium card" }
-    ];
-
-    const MOOD_OPTIONS = [
-      { id: "energy", label: "에너지", icon: "fa-bolt", gradient: "from-amber-200 via-lime-200 to-cyan-200", text: "오늘 네 안의 불씨가 가볍게 튀고 있어." },
-      { id: "burnout", label: "번아웃", icon: "fa-battery-quarter", gradient: "from-rose-200 via-pink-200 to-violet-200", text: "지금은 더 밀기보다 따뜻하게 식힐 때야." },
-      { id: "empty", label: "공허함", icon: "fa-moon", gradient: "from-sky-200 via-indigo-200 to-slate-200", text: "비어 보이는 마음에도 다음 색이 준비 중이야." },
-      { id: "challenge", label: "도전", icon: "fa-mountain-sun", gradient: "from-emerald-200 via-teal-200 to-fuchsia-200", text: "조금 무서운 방향이 오늘의 성장 방향일 수 있어." }
-    ];
-
-    const TARGET_OPTIONS = [
-      { id: "friend", label: "친구·단톡방", icon: "fa-comments", tone: "말랑하고 웃기게" },
-      { id: "family", label: "가족방", icon: "fa-house", tone: "따뜻하고 든든하게" },
-      { id: "work", label: "직장동료", icon: "fa-briefcase", tone: "센스 있고 부담 없게" },
-      { id: "me", label: "나에게", icon: "fa-user-astronaut", tone: "조용하고 깊게" }
-    ];
-
-    function safeJsonParse(raw, fallback) {
-      try { return JSON.parse(raw); } catch (error) { return fallback; }
-    }
-
-    function getRandomTemplate(seedText) {
-      const seed = String(seedText || Date.now());
-      let hash = 0;
-      for (let i = 0; i < seed.length; i += 1) hash = ((hash << 5) - hash) + seed.charCodeAt(i);
-      return LOCAL_TEMPLATES[Math.abs(hash) % LOCAL_TEMPLATES.length];
-    }
-
-    function getSeasonAndTime() {
-      const now = new Date();
-      const month = now.getMonth() + 1;
-      const hour = now.getHours();
-      let season = "겨울";
-      if (month >= 3 && month <= 5) season = "봄";
-      if (month >= 6 && month <= 8) season = "여름";
-      if (month >= 9 && month <= 11) season = "가을";
-      let time = "새벽";
-      if (hour >= 6 && hour < 12) time = "아침";
-      if (hour >= 12 && hour < 18) time = "오후";
-      if (hour >= 18 && hour < 23) time = "밤";
-      return { season: season, time: time, hour: hour };
-    }
-
-    function detectInAppBrowser() {
-      const ua = navigator.userAgent.toLowerCase();
-      return /kakaotalk|instagram|fb_iab|fbav|line|naver|daumapps|wv/.test(ua) || (ua.includes("iphone") && !ua.includes("safari"));
-    }
-
-    function sleep(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
-    function timeoutPromise(ms) {
-      return new Promise((resolve, reject) => setTimeout(() => reject(new Error("timeout")), ms));
-    }
-
-    async function fetchImageBlobUrl(prompt, seed) {
-      const text = `${prompt}, premium korean emotional quote card background, no text, high detail`;
-      const encoded = encodeURIComponent(text);
-      const url = `https://image.pollinations.ai/prompt/${encoded}?width=1080&height=1350&seed=${encodeURIComponent(seed)}&nologo=true&enhance=true&t=${Date.now()}`;
-      const response = await Promise.race([fetch(url, { cache: "no-store" }), timeoutPromise(IMAGE_TIMEOUT_MS)]);
-      if (!response.ok) throw new Error("image_fetch_failed");
-      const blob = await response.blob();
-      return URL.createObjectURL(blob);
-    }
-
-    function parseGeminiJson(text) {
-      const cleaned = String(text || "").replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-      if (!parsed.quote || !parsed.subtext) throw new Error("bad_json");
-      return {
-        quote: String(parsed.quote).slice(0, 80),
-        subtext: String(parsed.subtext).slice(0, 44),
-        prompt: parsed.prompt || "pastel neon emotional background, no text"
-      };
-    }
-
-    async function askGemini(apiKey, mood, target, env) {
-      if (!apiKey) throw new Error("missing_key");
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${encodeURIComponent(apiKey)}`;
-      const userPrompt = [
-        `환경: ${env.season} ${env.time}`,
-        `감정: ${mood.label} - ${mood.text}`,
-        `수신 타겟: ${target.label} - ${target.tone}`,
-        "quote는 한국어 44자 이하 명언형 문장으로 작성한다.",
-        "subtext는 한국어 20자 이하 보조 문장으로 작성한다.",
-        "prompt는 영어 이미지 생성 프롬프트로 작성하고 pastel neon emotional background no text를 포함한다."
-      ].join("\n");
-      let lastError = null;
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        try {
-          const response = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              systemInstruction: {
-                parts: [{
-                  text: "너는 한국어 감정 카드 카피라이터다. 반드시 JSON 객체 하나만 반환한다. 구조는 {\"quote\":\"문장\",\"subtext\":\"짧은 문장\",\"prompt\":\"english image prompt\"} 이다. markdown, 코드블록, 설명 문장은 금지한다."
-                }]
-              },
-              contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-              generationConfig: {
-                temperature: 0.92,
-                maxOutputTokens: 360,
-                responseMimeType: "application/json"
-              }
-            })
-          });
-          if (!response.ok) {
-            const err = new Error(`gemini_${response.status}`);
-            err.status = response.status;
-            throw err;
-          }
-          const data = await response.json();
-          return parseGeminiJson(data?.candidates?.[0]?.content?.parts?.[0]?.text || "");
-        } catch (error) {
-          lastError = error;
-          const retryable = error.status === 429 || error.status >= 500 || error.name === "TypeError" || String(error.message || "").includes("network");
-          if (!retryable || attempt === 4) break;
-          await sleep(Math.min(8000, 500 * Math.pow(2, attempt)) + Math.floor(Math.random() * 250));
+  <script>
+    (function(){
+      function load(src){return new Promise(function(ok,fail){var s=document.createElement("script");s.src=src;s.crossOrigin="anonymous";s.onload=ok;s.onerror=fail;document.head.appendChild(s);});}
+      async function boot(){
+        try{
+          if(!window.React){try{await load("https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js");}catch(e){await load("https://unpkg.com/react@18/umd/react.production.min.js");}}
+          if(!window.ReactDOM){try{await load("https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js");}catch(e){await load("https://unpkg.com/react-dom@18/umd/react-dom.production.min.js");}}
+          window.startZigme();
+        }catch(err){
+          document.getElementById("root").innerHTML='<div class="page"><div class="wrap"><h1>zigme</h1><p>React CDN을 불러오지 못했습니다. 새로고침하거나 네트워크를 확인하세요.</p></div></div>';
+          console.error(err);
         }
       }
-      throw lastError || new Error("gemini_failed");
-    }
+      boot();
+    })();
+  </script>
 
-    function wrapKoreanText(ctx, text, maxWidth) {
-      const chars = Array.from(text);
-      const lines = [];
-      let line = "";
-      for (let i = 0; i < chars.length; i += 1) {
-        const test = line + chars[i];
-        if (ctx.measureText(test).width > maxWidth && line.length > 0) {
-          lines.push(line.trim());
-          line = chars[i].trimStart();
-        } else {
-          line = test;
-        }
-      }
-      if (line.trim()) lines.push(line.trim());
-      return lines;
-    }
-
-    function roundRect(ctx, x, y, width, height, radius) {
-      ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + width - radius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-      ctx.lineTo(x + width, y + height - radius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-      ctx.lineTo(x + radius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
-      ctx.closePath();
-    }
-
-    function drawFallbackBackground(ctx, width, height, seed) {
-      let hash = 0;
-      for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-      const palettes = [
-        ["#f9a8d4", "#a7f3d0", "#bae6fd", "#fde68a"],
-        ["#c4b5fd", "#fbcfe8", "#99f6e4", "#e0f2fe"],
-        ["#fecdd3", "#ddd6fe", "#bbf7d0", "#fef3c7"],
-        ["#bfdbfe", "#f0abfc", "#fed7aa", "#ccfbf1"]
+  <script>
+    window.startZigme=function(){
+      var React=window.React,ReactDOM=window.ReactDOM,e=React.createElement;
+      var useState=React.useState,useEffect=React.useEffect,useMemo=React.useMemo,useRef=React.useRef;
+      var STORAGE_KEY="zigme_key",CACHE_KEY="zigme_recent_text_cache",COOLDOWN_MS=30000,IMAGE_TIMEOUT_MS=8000;
+      var LOCAL_TEMPLATES=[
+        {quote:"지금의 너는 늦은 게 아니라, 정확히 달아오르는 중이야.",subtext:"숨을 고르고 다시 켜지는 카드",prompt:"pastel neon sunrise over quiet city emotional warmth cinematic korean mood card"},
+        {quote:"불안은 망했다는 신호가 아니라, 중요한 문 앞에 섰다는 신호야.",subtext:"오늘의 떨림을 연료로",prompt:"soft neon doorway hopeful atmosphere pastel blue pink dreamy light"},
+        {quote:"아무것도 못 한 날에도 너는 버틴 만큼 이미 일을 했다.",subtext:"느린 회복 카드",prompt:"cozy moonlit room gentle neon lamp rest and healing pastel"},
+        {quote:"공허한 마음은 비어 있는 게 아니라, 새 리듬을 기다리는 공간이야.",subtext:"다시 채워질 빈자리",prompt:"minimal pastel neon lake empty space calm reflection elegant"},
+        {quote:"오늘 한 걸음이면 충분해. 불은 작아도 방향을 밝힌다.",subtext:"작은 실행의 불빛",prompt:"single glowing path in pastel neon garden hopeful cinematic"},
+        {quote:"너의 속도는 느린 게 아니라, 오래 갈 수 있게 조율된 속도야.",subtext:"나만의 박자",prompt:"pastel neon metronome soft music room gentle focus"},
+        {quote:"무너진 계획보다 중요한 건, 다시 잡은 손잡이 하나야.",subtext:"리셋 버튼의 밤",prompt:"neon reset button soft gradient midnight desk motivational"},
+        {quote:"지금 켜진 마음 하나면, 오늘은 다시 시작하기에 충분하다.",subtext:"Card ON",prompt:"heart shaped neon light pastel clouds clean premium card"}
       ];
-      const colors = palettes[hash % palettes.length];
-      const grad = ctx.createLinearGradient(0, 0, width, height);
-      grad.addColorStop(0, colors[0]);
-      grad.addColorStop(.34, colors[1]);
-      grad.addColorStop(.68, colors[2]);
-      grad.addColorStop(1, colors[3]);
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
-      for (let i = 0; i < 22; i += 1) {
-        const x = (hash + i * 127) % width;
-        const y = (hash + i * 313) % height;
-        const r = 90 + ((hash + i * 47) % 180);
-        const glow = ctx.createRadialGradient(x, y, 0, x, y, r);
-        glow.addColorStop(0, "rgba(255,255,255,.4)");
-        glow.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
+      var MOODS=[{id:"energy",label:"에너지",icon:"fa-bolt",text:"오늘 네 안의 불씨가 가볍게 튀고 있어."},{id:"burnout",label:"번아웃",icon:"fa-battery-quarter",text:"지금은 더 밀기보다 따뜻하게 식힐 때야."},{id:"empty",label:"공허함",icon:"fa-moon",text:"비어 보이는 마음에도 다음 색이 준비 중이야."},{id:"challenge",label:"도전",icon:"fa-mountain-sun",text:"조금 무서운 방향이 오늘의 성장 방향일 수 있어."}];
+      var TARGETS=[{id:"friend",label:"친구·단톡방",icon:"fa-comments",tone:"말랑하고 웃기게"},{id:"family",label:"가족방",icon:"fa-house",tone:"따뜻하고 든든하게"},{id:"work",label:"직장동료",icon:"fa-briefcase",tone:"센스 있고 부담 없게"},{id:"me",label:"나에게",icon:"fa-user-astronaut",tone:"조용하고 깊게"}];
+      function safe(v,f){try{return JSON.parse(v);}catch(err){return f;}}
+      function pick(seed){seed=String(seed||Date.now());var h=0;for(var i=0;i<seed.length;i++)h=((h<<5)-h)+seed.charCodeAt(i);return LOCAL_TEMPLATES[Math.abs(h)%LOCAL_TEMPLATES.length];}
+      function envNow(){var n=new Date(),m=n.getMonth()+1,h=n.getHours(),s="겨울",t="새벽";if(m>=3&&m<=5)s="봄";if(m>=6&&m<=8)s="여름";if(m>=9&&m<=11)s="가을";if(h>=6&&h<12)t="아침";if(h>=12&&h<18)t="오후";if(h>=18&&h<23)t="밤";return{season:s,time:t,hour:h};}
+      function inApp(){var ua=navigator.userAgent.toLowerCase();return /kakaotalk|instagram|fb_iab|fbav|line|naver|daumapps|wv/.test(ua)||(ua.indexOf("iphone")>-1&&ua.indexOf("safari")<0);}
+      function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+      function timeout(ms){return new Promise(function(r,j){setTimeout(function(){j(new Error("timeout"));},ms);});}
+      async function fetchBlobUrl(prompt,seed){var text=encodeURIComponent(prompt+", premium korean emotional quote card background, no text, high detail");var url="https://image.pollinations.ai/prompt/"+text+"?width=1080&height=1350&seed="+encodeURIComponent(seed)+"&nologo=true&enhance=true&t="+Date.now();var res=await Promise.race([fetch(url,{cache:"no-store"}),timeout(IMAGE_TIMEOUT_MS)]);if(!res.ok)throw new Error("image_fetch_failed");return URL.createObjectURL(await res.blob());}
+      async function askGemini(key,mood,target,env){if(!key)throw new Error("missing_key");var endpoint="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key="+encodeURIComponent(key);var body={systemInstruction:{parts:[{text:"너는 한국어 감정 카드 카피라이터다. 반드시 JSON 객체 하나만 반환한다. 구조는 {\"quote\":\"문장\",\"subtext\":\"짧은 문장\",\"prompt\":\"english image prompt\"} 이다. markdown, 코드블록, 설명 문장은 금지한다."}]},contents:[{role:"user",parts:[{text:["환경: "+env.season+" "+env.time,"감정: "+mood.label+" - "+mood.text,"수신 타겟: "+target.label+" - "+target.tone,"quote는 한국어 44자 이하 명언형 문장으로 작성한다.","subtext는 한국어 20자 이하 보조 문장으로 작성한다.","prompt는 영어 이미지 생성 프롬프트로 작성하고 pastel neon emotional background no text를 포함한다."].join("\\n")}]}],generationConfig:{temperature:.92,maxOutputTokens:360,responseMimeType:"application/json"}};var last=null;for(var a=0;a<5;a++){try{var res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});if(!res.ok){var er=new Error("gemini_"+res.status);er.status=res.status;throw er;}var data=await res.json();var parts=data&&data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts;var raw=parts&&parts[0]&&parts[0].text||"{}";var p=JSON.parse(raw.replace(/```json/g,"").replace(/```/g,"").trim());if(!p.quote||!p.subtext)throw new Error("bad_json");return{quote:String(p.quote).slice(0,80),subtext:String(p.subtext).slice(0,44),prompt:p.prompt||"pastel neon emotional background no text"};}catch(err){last=err;var retry=err.status===429||err.status>=500||err.name==="TypeError";if(!retry||a===4)break;await sleep(Math.min(8000,500*Math.pow(2,a))+Math.floor(Math.random()*250));}}throw last||new Error("gemini_failed");}
+      function wrap(ctx,text,max){var ch=Array.from(text),lines=[],line="";for(var i=0;i<ch.length;i++){var test=line+ch[i];if(ctx.measureText(test).width>max&&line.length){lines.push(line.trim());line=ch[i].trimStart();}else line=test;}if(line.trim())lines.push(line.trim());return lines;}
+      function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+      function fallback(ctx,w,h){var g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,"#f9a8d4");g.addColorStop(.34,"#a7f3d0");g.addColorStop(.68,"#bae6fd");g.addColorStop(1,"#fde68a");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);for(var i=0;i<20;i++){var x=i*137%w,y=i*271%h,r=100+i*11%180,rg=ctx.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,"rgba(255,255,255,.4)");rg.addColorStop(1,"rgba(255,255,255,0)");ctx.fillStyle=rg;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}}
+      function loadImg(src){return new Promise(function(ok,fail){var img=new Image();img.crossOrigin="anonymous";img.onload=function(){ok(img);};img.onerror=fail;img.src=src;});}
+      async function bake(card){if(document.fonts&&document.fonts.load)await Promise.all([document.fonts.load('900 52px "Noto Serif KR"'),document.fonts.load('700 28px "Noto Sans KR"')]);var c=document.createElement("canvas"),w=1080,h=1350;c.width=w;c.height=h;var ctx=c.getContext("2d"),done=false;if(card.imageUrl){try{var img=await loadImg(card.imageUrl),r=Math.max(w/img.width,h/img.height),dw=img.width*r,dh=img.height*r;ctx.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);done=true;}catch(err){done=false;}}if(!done)fallback(ctx,w,h);var ov=ctx.createLinearGradient(0,0,0,h);ov.addColorStop(0,"rgba(8,8,18,.12)");ov.addColorStop(.5,"rgba(8,8,18,.28)");ov.addColorStop(1,"rgba(8,8,18,.68)");ctx.fillStyle=ov;ctx.fillRect(0,0,w,h);ctx.shadowColor="rgba(255,255,255,.9)";ctx.shadowBlur=34;ctx.strokeStyle="rgba(255,255,255,.72)";ctx.lineWidth=3;rr(ctx,70,70,w-140,h-140,46);ctx.stroke();var len=Array.from(card.quote).length,fs=52;if(len>34)fs=42;if(len>50)fs=32;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.shadowColor="rgba(244,114,182,.82)";ctx.shadowBlur=18;ctx.font='900 '+fs+'px "Noto Serif KR", serif';var lines=wrap(ctx,card.quote,780),lh=fs*1.48,sy=h/2-((lines.length-1)*lh)/2-48;lines.forEach(function(line,i){ctx.fillText(line,w/2,sy+i*lh);});ctx.shadowColor="rgba(34,211,238,.7)";ctx.shadowBlur=14;ctx.font='700 30px "Noto Sans KR", sans-serif';ctx.fillText(card.subtext,w/2,sy+lines.length*lh+44);ctx.shadowBlur=0;ctx.font='800 26px "Noto Sans KR", sans-serif';ctx.fillStyle="rgba(255,255,255,.88)";ctx.fillText("zigme · Card ON",w/2,h-142);return c;}
+      function dataBlob(url){var p=url.split(","),m=p[0].match(/:(.*?);/)[1],b=atob(p[1]),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new Blob([u],{type:m});}
+      function App(){var cached=safe(localStorage.getItem(CACHE_KEY),null),init=cached&&cached.quote?cached:pick("initial");var s1=useState("delivery"),activeTab=s1[0],setActiveTab=s1[1];var s2=useState(function(){return localStorage.getItem(STORAGE_KEY)||"";}),apiKey=s2[0],setApiKey=s2[1];var s3=useState(function(){return !localStorage.getItem(STORAGE_KEY);}),showSettings=s3[0],setShowSettings=s3[1];var s4=useState(init.quote),quote=s4[0],setQuote=s4[1];var s5=useState(init.subtext),subtext=s5[0],setSubtext=s5[1];var s6=useState(""),imageUrl=s6[0],setImageUrl=s6[1];var s7=useState(false),imageLoaded=s7[0],setImageLoaded=s7[1];var s8=useState(false),isGenerating=s8[0],setIsGenerating=s8[1];var s9=useState(false),interstitialActive=s9[0],setInterstitialActive=s9[1];var s10=useState(10),interstitialCount=s10[0],setInterstitialCount=s10[1];var s11=useState(""),savedCardImage=s11[0],setSavedCardImage=s11[1];var s12=useState(false),showSaveModal=s12[0],setShowSaveModal=s12[1];var s13=useState(""),toastMsg=s13[0],setToastMsg=s13[1];var s14=useState(MOODS[0]),mood=s14[0],setMood=s14[1];var s15=useState(TARGETS[3]),target=s15[0],setTarget=s15[1];var s16=useState(0),cooldownUntil=s16[0],setCooldownUntil=s16[1];var s17=useState(Date.now()),tick=s17[0],setTick=s17[1];var s18=useState(cached&&cached.quote?"Cache ON":"Local ON"),sourceLabel=s18[0],setSourceLabel=s18[1];var canvasRef=useRef(null),seedRef=useRef("initial"),promptRef=useRef(init.prompt||LOCAL_TEMPLATES[0].prompt),actionRef=useRef("download");var env=useMemo(function(){return envNow();},[tick]);var isCooldown=cooldownUntil>tick,left=Math.max(0,Math.ceil((cooldownUntil-tick)/1000)),prog=isCooldown?Math.max(0,Math.min(100,((COOLDOWN_MS-(cooldownUntil-tick))/COOLDOWN_MS)*100)):100;var card=useMemo(function(){return{quote:quote,subtext:subtext,imageUrl:imageUrl,seed:seedRef.current,prompt:promptRef.current};},[quote,subtext,imageUrl]);useEffect(function(){var t=setInterval(function(){setTick(Date.now());},500);return function(){clearInterval(t);};},[]);useEffect(function(){if(!interstitialActive||interstitialCount<=0)return;var t=setTimeout(function(){setInterstitialCount(function(v){return Math.max(0,v-1);});},1000);return function(){clearTimeout(t);};},[interstitialActive,interstitialCount]);useEffect(function(){var cancelled=false;async function run(){if(!canvasRef.current)return;try{var baked=await bake(card);if(cancelled)return;var c=canvasRef.current;c.width=540;c.height=675;c.getContext("2d").drawImage(baked,0,0,c.width,c.height);}catch(err){console.error(err);}}run();return function(){cancelled=true;};},[card]);useEffect(function(){return function(){if(imageUrl)URL.revokeObjectURL(imageUrl);};},[imageUrl]);function cache(q,s){try{localStorage.setItem(CACHE_KEY,JSON.stringify({quote:q,subtext:s}));}catch(err){if(err&&err.name==="QuotaExceededError")localStorage.removeItem(CACHE_KEY);}}async function generate(reason){if(isCooldown||isGenerating){setToastMsg("30초 쿨다운이 끝나면 다시 구울 수 있어요.");return;}setIsGenerating(true);setToastMsg("");setImageLoaded(false);var seed=Date.now()+"-"+mood.id+"-"+target.id+"-"+reason,next;try{next=await askGemini(apiKey,mood,target,env);setSourceLabel("Gemini ON");}catch(err){var local=pick(seed);next={quote:local.quote,subtext:mood.label+" · "+target.label,prompt:local.prompt};setSourceLabel("Local ON");setToastMsg("API 키 없음 또는 통신 장애로 로컬 프리셋을 적용했어요.");}var blobUrl="";try{blobUrl=await fetchBlobUrl(next.prompt,seed);}catch(err){blobUrl="";setImageLoaded(true);}setImageUrl(function(prev){if(prev)URL.revokeObjectURL(prev);return blobUrl;});seedRef.current=seed;promptRef.current=next.prompt;setQuote(next.quote);setSubtext(next.subtext);cache(next.quote,next.subtext);setCooldownUntil(Date.now()+COOLDOWN_MS);setIsGenerating(false);}async function makeData(){return(await bake(card)).toDataURL("image/png");}function showInterstitial(action){actionRef.current=action;setInterstitialCount(10);setInterstitialActive(true);}async function receive(){if(interstitialCount>0)return;var action=actionRef.current;setInterstitialActive(false);var du=await makeData();setSavedCardImage(du);if(action==="download"){if(inApp()){setShowSaveModal(true);return;}var a=document.createElement("a");a.href=du;a.download="zigme-card-"+Date.now()+".png";document.body.appendChild(a);a.click();a.remove();}else{var blob=dataBlob(du),file=new File([blob],"zigme-card-"+Date.now()+".png",{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share)await navigator.share({title:"zigme Card ON",text:quote,files:[file]});else if(inApp())setShowSaveModal(true);else{if(navigator.clipboard)await navigator.clipboard.writeText(quote+"\\n"+subtext+"\\nzigme Card ON");setToastMsg("공유 문구를 클립보드에 복사했어요.");}}}
+        function KeyModal(){var ks=useState(apiKey),val=ks[0],setVal=ks[1];return e("div",{className:"modal"},e("div",{className:"box"},e("h2",null,"zigme 시동 키"),e("p",null,"Gemini API Key를 저장하면 AI 카드가 켜집니다."),e("input",{type:"password",placeholder:"Gemini API Key",value:val,onChange:function(ev){setVal(ev.target.value);}}),e("div",{className:"actions"},e("button",{className:"btn cyan",onClick:function(){var v=val.trim();if(v){localStorage.setItem(STORAGE_KEY,v);setApiKey(v);}setShowSettings(false);}},"저장하고 켜기"),e("button",{className:"btn white",onClick:function(){setShowSettings(false);}},"로컬로 시작"))));}
+        function SaveModal(){return e("div",{className:"modal"},e("div",{className:"box"},e("h2",null,"길게 꾹 눌러서 내 앨범에 저장"),e("p",null,"카톡과 인스타 인앱 브라우저에서는 이미지 팝업 저장이 가장 안정적입니다."),e("img",{className:"saveimg",src:savedCardImage,alt:"저장할 zigme 카드"}),e("button",{className:"btn white",style:{marginTop:12,width:"100%"},onClick:function(){setShowSaveModal(false);}},"닫기")));}
+        var tabs=[["delivery","지그미 배달","fa-fire-flame-curved"],["signal","지금 신호등","fa-traffic-light"],["talk","톡방 덕담","fa-paper-plane"],["assistant","실시간 비서","fa-satellite-dish"]];
+        return e("main",{className:"page"},e("div",{className:"wrap"},e("header",{className:"top"},e("div",null,e("div",{className:"logo"},"zigme"),e("div",{className:"tag"},"지금, 내 감정에 불을 켜다 · Card ON")),e("button",{className:"pill",onClick:function(){setShowSettings(true);}},apiKey?"키 저장됨":"API Key")),e("section",{className:"layout"},e("div",null,e("nav",{className:"tabs"},tabs.map(function(t){return e("button",{key:t[0],className:"tab "+(activeTab===t[0]?"on":""),onClick:function(){setActiveTab(t[0]);}},e("i",{className:"fa-solid "+t[2]}),e("div",null,t[1]));})),e("div",{className:"glass panel"},activeTab==="delivery"&&e("div",{className:"center"},e("button",{className:"big",disabled:isGenerating||isCooldown,onClick:function(){generate("delivery");}},isGenerating?"카드 굽는 중":"지금 내 카드 굽기 ⚡"),e("p",null,"Gemini 장애와 429는 로컬 프리셋으로 즉시 우회합니다.")),activeTab==="signal"&&e("div",null,e("h2",null,"지금 네 마음에 켜진 신호등은?"),e("div",{className:"cards"},MOODS.map(function(m,i){return e("button",{key:m.id,className:"choice m"+i+(mood.id===m.id?" on":""),onClick:function(){setMood(m);}},e("i",{className:"fa-solid "+m.icon}),e("div",null,m.label),e("small",null,m.text));}))),activeTab==="talk"&&e("div",null,e("h2",null,"이 카드를 어디로 던질까?"),e("div",{className:"cards"},TARGETS.map(function(t){return e("button",{key:t.id,className:"choice "+(target.id===t.id?"on":""),onClick:function(){setTarget(t);}},e("i",{className:"fa-solid "+t.icon}),e("div",null,t.label),e("small",null,t.tone));}))),activeTab==="assistant"&&e("div",null,e("h2",null,"실시간 비서"),e("div",{className:"cards"},e("div",{className:"choice"},"계절",e("small",null,env.season)),e("div",{className:"choice"},"시간대",e("small",null,env.time)),e("div",{className:"choice"},"동기화",e("small",null,env.hour+"시"))),e("button",{className:"btn cyan",style:{marginTop:16,width:"100%"},disabled:isGenerating||isCooldown,onClick:function(){generate("assistant");}},"현재 환경으로 카드 다시 맞추기")),isCooldown&&e("div",null,e("div",{className:"muted"},"Gemini 429 방어 쿨다운 · "+left+"초"),e("div",{className:"bar"},e("span",{style:{width:prog+"%"}}))),toastMsg&&e("div",{className:"toast"},toastMsg))),e("aside",{className:"glass side"},e("div",{className:"sideTop"},e("div",null,e("div",{className:"muted"},"RESULT CARD"),e("strong",null,sourceLabel+" · "+((imageLoaded||!imageUrl)?"Image Ready":"Image Loading"))),e("div",{className:"live"},"LIVE")),e("canvas",{ref:canvasRef}),imageUrl&&e("img",{className:"hidden",src:imageUrl,crossOrigin:"anonymous",onLoad:function(){setImageLoaded(true);},onError:function(){setImageLoaded(true);},alt:"Pollinations Blob cache"}),e("div",{className:"ad"},e("div",{className:"muted"},"AdFit"),e("div",null,"지그미 감정 충전 광고 슬롯")),e("div",{className:"actions"},e("button",{className:"btn white",onClick:function(){showInterstitial("download");}},"내 폰에 저장"),e("button",{className:"btn cyan",onClick:function(){showInterstitial("share");}},"공유하기")))),e("a",{className:"footer",href:"https://www.google.com/search?q=%EB%A1%9C%EB%98%90+%EC%82%AC%EC%A3%BC+%ED%96%89%EC%9A%B4+%ED%99%95%EC%9D%B8",target:"_blank",rel:"noopener noreferrer"},"로또/사주 행운 확인하기")),showSettings&&e(KeyModal),interstitialActive&&e("div",{className:"modal"},e("div",{className:"box"},e("div",{className:"count"},interstitialCount>0?interstitialCount:"✓"),e("h2",null,"카드 받기 대기 중"),e("p",null,"10초 네온 타이머가 끝나야 다운로드가 열립니다."),e("a",{className:"footer",style:{margin:"12px 0"},href:"https://www.google.com/search?q=%EB%A1%9C%EB%98%90+%EC%82%AC%EC%A3%BC+%ED%96%89%EC%9A%B4+%ED%99%95%EC%9D%B8",target:"_blank",rel:"noopener noreferrer"},"로또/사주 행운 확인하기"),e("div",{className:"bar"},e("span",{style:{width:((10-interstitialCount)/10*100)+"%"}})),e("button",{className:"btn white",style:{marginTop:14,width:"100%"},disabled:interstitialCount>0,onClick:receive},"카드 받기"))),showSaveModal&&savedCardImage&&e(SaveModal));
       }
-    }
-
-    function loadImage(src) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = src;
-      });
-    }
-
-    async function bakeCanvas(card) {
-      if (document.fonts && document.fonts.load) {
-        await Promise.all([
-          document.fonts.load('900 52px "Noto Serif KR"'),
-          document.fonts.load('700 28px "Noto Sans KR"')
-        ]);
-      }
-      const canvas = document.createElement("canvas");
-      const width = 1080;
-      const height = 1350;
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      let imageDrawn = false;
-      if (card.imageObjectUrl) {
-        try {
-          const img = await loadImage(card.imageObjectUrl);
-          const ratio = Math.max(width / img.width, height / img.height);
-          const drawW = img.width * ratio;
-          const drawH = img.height * ratio;
-          ctx.drawImage(img, (width - drawW) / 2, (height - drawH) / 2, drawW, drawH);
-          imageDrawn = true;
-        } catch (error) {
-          imageDrawn = false;
-        }
-      }
-      if (!imageDrawn) drawFallbackBackground(ctx, width, height, card.seed || card.quote);
-      const overlay = ctx.createLinearGradient(0, 0, 0, height);
-      overlay.addColorStop(0, "rgba(8,8,18,.12)");
-      overlay.addColorStop(.5, "rgba(8,8,18,.28)");
-      overlay.addColorStop(1, "rgba(8,8,18,.68)");
-      ctx.fillStyle = overlay;
-      ctx.fillRect(0, 0, width, height);
-      ctx.save();
-      ctx.shadowColor = "rgba(255,255,255,.9)";
-      ctx.shadowBlur = 34;
-      ctx.strokeStyle = "rgba(255,255,255,.72)";
-      ctx.lineWidth = 3;
-      roundRect(ctx, 70, 70, width - 140, height - 140, 46);
-      ctx.stroke();
-      ctx.restore();
-      const quoteLength = Array.from(card.quote).length;
-      let fontSize = 52;
-      if (quoteLength > 34) fontSize = 42;
-      if (quoteLength > 50) fontSize = 32;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#ffffff";
-      ctx.shadowColor = "rgba(244,114,182,.82)";
-      ctx.shadowBlur = 18;
-      ctx.font = `900 ${fontSize}px "Noto Serif KR", serif`;
-      const lines = wrapKoreanText(ctx, card.quote, 780);
-      const lineHeight = fontSize * 1.48;
-      const startY = height / 2 - ((lines.length - 1) * lineHeight) / 2 - 48;
-      lines.forEach((line, index) => ctx.fillText(line, width / 2, startY + index * lineHeight));
-      ctx.shadowColor = "rgba(34,211,238,.7)";
-      ctx.shadowBlur = 14;
-      ctx.font = '700 30px "Noto Sans KR", sans-serif';
-      ctx.fillText(card.subtext, width / 2, startY + lines.length * lineHeight + 44);
-      ctx.shadowBlur = 0;
-      ctx.font = '800 26px "Noto Sans KR", sans-serif';
-      ctx.fillStyle = "rgba(255,255,255,.88)";
-      ctx.fillText("zigme · Card ON", width / 2, height - 142);
-      return canvas;
-    }
-
-    function dataUrlToBlob(dataUrl) {
-      const parts = dataUrl.split(",");
-      const mime = parts[0].match(/:(.*?);/)[1];
-      const binary = atob(parts[1]);
-      const array = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i += 1) array[i] = binary.charCodeAt(i);
-      return new Blob([array], { type: mime });
-    }
-
-    function KeyModal({ apiKey, setApiKey, close }) {
-      const [value, setValue] = useState(apiKey || "");
-      return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-5">
-          <div className="glass w-full max-w-md rounded-2xl p-6 shadow-neon">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-300 text-slate-950">
-                <i className="fa-solid fa-key"></i>
-              </div>
-              <div>
-                <h2 className="text-xl font-black">zigme 시동 키</h2>
-                <p className="text-sm text-slate-300">Gemini API Key를 저장하면 AI 카드가 켜집니다.</p>
-              </div>
-            </div>
-            <input value={value} onChange={(event) => setValue(event.target.value)} type="password" placeholder="Gemini API Key" className="mb-3 w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white outline-none focus:border-cyan-300" />
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  const trimmed = value.trim();
-                  if (trimmed) {
-                    localStorage.setItem(STORAGE_KEY, trimmed);
-                    setApiKey(trimmed);
-                  }
-                  close();
-                }}
-                className="rounded-xl bg-cyan-300 px-4 py-3 font-black text-slate-950"
-              >
-                저장하고 켜기
-              </button>
-              <button onClick={close} className="rounded-xl bg-white/10 px-4 py-3 font-bold text-slate-200">로컬로 시작</button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    function SaveModal({ dataUrl, onClose }) {
-      return (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 p-4">
-          <div className="mx-auto max-w-sm pb-8 pt-5 text-center">
-            <h2 className="mb-2 text-xl font-black">길게 꾹 눌러서 내 앨범에 저장</h2>
-            <p className="mb-4 text-sm text-slate-300">카톡과 인스타 인앱 브라우저에서는 이미지 팝업 저장이 가장 안정적입니다.</p>
-            <img src={dataUrl} alt="저장할 zigme 카드" className="mb-4 w-full rounded-2xl border border-white/20 shadow-neon" />
-            <button onClick={onClose} className="w-full rounded-xl bg-white px-4 py-3 font-black text-slate-950">닫기</button>
-          </div>
-        </div>
-      );
-    }
-
-    function App() {
-      const cached = safeJsonParse(localStorage.getItem(CACHE_KEY), null);
-      const initialTemplate = cached && cached.quote && cached.subtext ? cached : getRandomTemplate("initial");
-      const [activeTab, setActiveTab] = useState("delivery");
-      const [apiKey, setApiKey] = useState(() => localStorage.getItem(STORAGE_KEY) || "");
-      const [showSettings, setShowSettings] = useState(() => !localStorage.getItem(STORAGE_KEY));
-      const [quote, setQuote] = useState(initialTemplate.quote);
-      const [subtext, setSubtext] = useState(initialTemplate.subtext);
-      const [imageUrl, setImageUrl] = useState("");
-      const [imageLoaded, setImageLoaded] = useState(false);
-      const [isGenerating, setIsGenerating] = useState(false);
-      const [interstitialActive, setInterstitialActive] = useState(false);
-      const [interstitialCount, setInterstitialCount] = useState(10);
-      const [savedCardImage, setSavedCardImage] = useState("");
-      const [showSaveModal, setShowSaveModal] = useState(false);
-      const [toastMsg, setToastMsg] = useState("");
-      const [selectedMood, setSelectedMood] = useState(MOOD_OPTIONS[0]);
-      const [selectedTarget, setSelectedTarget] = useState(TARGET_OPTIONS[3]);
-      const [cooldownUntil, setCooldownUntil] = useState(0);
-      const [nowTick, setNowTick] = useState(Date.now());
-      const [sourceLabel, setSourceLabel] = useState(cached && cached.quote ? "Cache ON" : "Local ON");
-      const previewCanvasRef = useRef(null);
-      const seedRef = useRef("initial");
-      const promptRef = useRef(initialTemplate.prompt || "pastel neon emotional quote card background, no text");
-      const interstitialActionRef = useRef("download");
-      const env = useMemo(() => getSeasonAndTime(), [nowTick]);
-      const isCooldown = cooldownUntil > nowTick;
-      const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - nowTick) / 1000));
-      const cooldownProgress = isCooldown ? Math.max(0, Math.min(100, ((COOLDOWN_MS - (cooldownUntil - nowTick)) / COOLDOWN_MS) * 100)) : 100;
-      const currentCard = useMemo(() => ({
-        quote: quote,
-        subtext: subtext,
-        imageObjectUrl: imageUrl,
-        seed: seedRef.current,
-        prompt: promptRef.current
-      }), [quote, subtext, imageUrl]);
-
-      useEffect(() => {
-        const timer = setInterval(() => setNowTick(Date.now()), 500);
-        return () => clearInterval(timer);
-      }, []);
-
-      useEffect(() => {
-        if (!interstitialActive || interstitialCount <= 0) return undefined;
-        const timer = setTimeout(() => setInterstitialCount((value) => Math.max(0, value - 1)), 1000);
-        return () => clearTimeout(timer);
-      }, [interstitialActive, interstitialCount]);
-
-      useEffect(() => {
-        let cancelled = false;
-        async function renderPreview() {
-          if (!previewCanvasRef.current || !quote) return;
-          try {
-            const baked = await bakeCanvas(currentCard);
-            if (cancelled) return;
-            const canvas = previewCanvasRef.current;
-            canvas.width = 540;
-            canvas.height = 675;
-            const ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(baked, 0, 0, canvas.width, canvas.height);
-          } catch (error) {
-            console.error(error);
-          }
-        }
-        renderPreview();
-        return () => { cancelled = true; };
-      }, [currentCard, quote]);
-
-      useEffect(() => {
-        return () => {
-          if (imageUrl) URL.revokeObjectURL(imageUrl);
-        };
-      }, [imageUrl]);
-
-      function cacheTextOnly(nextQuote, nextSubtext) {
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ quote: nextQuote, subtext: nextSubtext }));
-        } catch (error) {
-          if (error && error.name === "QuotaExceededError") localStorage.removeItem(CACHE_KEY);
-        }
-      }
-
-      async function generateCard(reason) {
-        if (isCooldown || isGenerating) {
-          setToastMsg("30초 쿨다운이 끝나면 다시 구울 수 있어요.");
-          return;
-        }
-        setIsGenerating(true);
-        setToastMsg("");
-        setImageLoaded(false);
-        const seed = `${Date.now()}-${selectedMood.id}-${selectedTarget.id}-${reason}`;
-        let nextText = null;
-        try {
-          nextText = await askGemini(apiKey, selectedMood, selectedTarget, env);
-          setSourceLabel("Gemini ON");
-        } catch (error) {
-          const local = getRandomTemplate(seed);
-          nextText = { quote: local.quote, subtext: `${selectedMood.label} · ${selectedTarget.label}`, prompt: local.prompt };
-          setSourceLabel("Local ON");
-          setToastMsg("API 키 없음 또는 통신 장애로 로컬 프리셋을 적용했어요.");
-        }
-        let nextImageUrl = "";
-        try {
-          nextImageUrl = await fetchImageBlobUrl(nextText.prompt, seed);
-        } catch (error) {
-          nextImageUrl = "";
-          setImageLoaded(true);
-        }
-        setImageUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return nextImageUrl;
-        });
-        seedRef.current = seed;
-        promptRef.current = nextText.prompt;
-        setQuote(nextText.quote);
-        setSubtext(nextText.subtext);
-        cacheTextOnly(nextText.quote, nextText.subtext);
-        setCooldownUntil(Date.now() + COOLDOWN_MS);
-        setIsGenerating(false);
-      }
-
-      async function prepareDataUrl() {
-        const canvas = await bakeCanvas(currentCard);
-        return canvas.toDataURL("image/png");
-      }
-
-      function showInterstitial(action) {
-        interstitialActionRef.current = action;
-        setInterstitialCount(10);
-        setInterstitialActive(true);
-      }
-
-      async function receiveCard() {
-        if (interstitialCount > 0) return;
-        const action = interstitialActionRef.current;
-        setInterstitialActive(false);
-        const dataUrl = await prepareDataUrl();
-        setSavedCardImage(dataUrl);
-        if (action === "download") {
-          if (detectInAppBrowser()) {
-            setShowSaveModal(true);
-            return;
-          }
-          const link = document.createElement("a");
-          link.href = dataUrl;
-          link.download = `zigme-card-${Date.now()}.png`;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-        }
-        if (action === "share") {
-          const blob = dataUrlToBlob(dataUrl);
-          const file = new File([blob], `zigme-card-${Date.now()}.png`, { type: "image/png" });
-          if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
-            await navigator.share({ title: "zigme Card ON", text: quote, files: [file] });
-          } else if (detectInAppBrowser()) {
-            setShowSaveModal(true);
-          } else {
-            if (navigator.clipboard) await navigator.clipboard.writeText(`${quote}\n${subtext}\nzigme Card ON`);
-            setToastMsg("공유 문구를 클립보드에 복사했어요.");
-          }
-        }
-      }
-
-      const tabs = [
-        { id: "delivery", label: "지그미 배달", icon: "fa-fire-flame-curved" },
-        { id: "signal", label: "지금 신호등", icon: "fa-traffic-light" },
-        { id: "talk", label: "톡방 덕담", icon: "fa-paper-plane" },
-        { id: "assistant", label: "실시간 비서", icon: "fa-satellite-dish" }
-      ];
-
-      return (
-        <main className="soft-grid min-h-[100dvh] safe-bottom flex flex-col">
-          <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pb-3 pt-5">
-            <div>
-              <h1 className="text-2xl font-black tracking-normal">zigme</h1>
-              <p className="text-xs font-medium text-cyan-100/80">지금, 내 감정에 불을 켜다 · Card ON</p>
-            </div>
-            <button onClick={() => setShowSettings(true)} className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-bold">
-              <i className="fa-solid fa-key mr-2"></i>{apiKey ? "키 저장됨" : "API Key"}
-            </button>
-          </header>
-
-          <section className="mx-auto grid w-full max-w-5xl flex-1 gap-4 px-4 pb-4 lg:grid-cols-[1fr_390px]">
-            <div className="flex flex-col gap-4">
-              <nav className="grid grid-cols-4 gap-2 rounded-2xl bg-black/25 p-2">
-                {tabs.map((tab) => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`rounded-xl px-2 py-3 text-xs font-black transition ${activeTab === tab.id ? "bg-white text-slate-950 shadow-neon" : "bg-white/5 text-slate-300"}`}>
-                    <i className={`fa-solid ${tab.icon} mb-1 block text-base`}></i>
-                    {tab.label}
-                  </button>
-                ))}
-              </nav>
-
-              <div className="glass flex min-h-[360px] flex-col rounded-3xl p-5">
-                {activeTab === "delivery" && (
-                  <div className="flex flex-1 flex-col items-center justify-center text-center">
-                    <button disabled={isGenerating || isCooldown} onClick={() => generateCard("delivery")} className={`neon-ring pulse-glow flex h-56 w-56 items-center justify-center rounded-full bg-slate-950 p-6 text-center text-2xl font-black leading-tight shadow-neon ${isGenerating || isCooldown ? "opacity-70" : ""}`}>
-                      {isGenerating ? "카드 굽는 중" : "지금 내 카드 굽기 ⚡"}
-                    </button>
-                    <p className="mt-7 text-sm text-slate-300">Gemini 장애와 429는 로컬 프리셋으로 즉시 우회합니다.</p>
-                  </div>
-                )}
-
-                {activeTab === "signal" && (
-                  <div>
-                    <h2 className="mb-4 text-xl font-black">지금 네 마음에 켜진 신호등은?</h2>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {MOOD_OPTIONS.map((mood) => (
-                        <button key={mood.id} onClick={() => setSelectedMood(mood)} className={`rounded-2xl bg-gradient-to-br ${mood.gradient} p-4 text-left text-slate-950 ring-2 ${selectedMood.id === mood.id ? "ring-white" : "ring-transparent"}`}>
-                          <i className={`fa-solid ${mood.icon} mb-4 text-2xl`}></i>
-                          <div className="text-lg font-black">{mood.label}</div>
-                          <div className="mt-1 text-sm font-bold opacity-80">{mood.text}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "talk" && (
-                  <div>
-                    <h2 className="mb-4 text-xl font-black">이 카드를 어디로 던질까?</h2>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {TARGET_OPTIONS.map((target) => (
-                        <button key={target.id} onClick={() => setSelectedTarget(target)} className={`rounded-2xl border p-4 text-left transition ${selectedTarget.id === target.id ? "border-fuchsia-200 bg-fuchsia-200 text-slate-950" : "border-white/15 bg-white/10 text-white"}`}>
-                          <i className={`fa-solid ${target.icon} mb-4 text-2xl`}></i>
-                          <div className="text-lg font-black">{target.label}</div>
-                          <div className="mt-1 text-sm font-bold opacity-80">{target.tone}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "assistant" && (
-                  <div className="flex flex-1 flex-col justify-center">
-                    <h2 className="mb-4 text-xl font-black">실시간 비서</h2>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-2xl bg-white/10 p-4">
-                        <div className="text-xs text-slate-400">계절</div>
-                        <div className="mt-1 text-2xl font-black">{env.season}</div>
-                      </div>
-                      <div className="rounded-2xl bg-white/10 p-4">
-                        <div className="text-xs text-slate-400">시간대</div>
-                        <div className="mt-1 text-2xl font-black">{env.time}</div>
-                      </div>
-                      <div className="rounded-2xl bg-white/10 p-4">
-                        <div className="text-xs text-slate-400">동기화</div>
-                        <div className="mt-1 text-2xl font-black">{env.hour}시</div>
-                      </div>
-                    </div>
-                    <button onClick={() => generateCard("assistant")} disabled={isGenerating || isCooldown} className="mt-5 rounded-2xl bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-amber-200 px-5 py-4 font-black text-slate-950">현재 환경으로 카드 다시 맞추기</button>
-                  </div>
-                )}
-
-                {isCooldown && (
-                  <div className="mt-5">
-                    <div className="mb-2 flex justify-between text-xs font-bold text-slate-300">
-                      <span>Gemini 429 방어 쿨다운</span>
-                      <span>{cooldownLeft}초</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                      <div className="h-full rounded-full bg-cyan-300" style={{ width: `${cooldownProgress}%` }}></div>
-                    </div>
-                  </div>
-                )}
-                {toastMsg && <div className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold text-cyan-100">{toastMsg}</div>}
-              </div>
-            </div>
-
-            <aside className="flex flex-col">
-              <div className="glass rounded-3xl p-3">
-                <div className="mb-3 flex items-center justify-between px-1">
-                  <div>
-                    <div className="text-xs font-bold text-slate-400">RESULT CARD</div>
-                    <div className="text-sm font-black">{sourceLabel} · {imageLoaded || !imageUrl ? "Image Ready" : "Image Loading"}</div>
-                  </div>
-                  <div className="rounded-full bg-emerald-300 px-3 py-1 text-xs font-black text-slate-950">LIVE</div>
-                </div>
-                <canvas ref={previewCanvasRef} className="aspect-[4/5] w-full rounded-2xl bg-slate-900"></canvas>
-                {imageUrl && <img src={imageUrl} crossOrigin="anonymous" onLoad={() => setImageLoaded(true)} onError={() => setImageLoaded(true)} alt="Pollinations Blob 캐시 배경" className="sr-only" />}
-                <div className="my-3 rounded-2xl bg-gray-900/50 py-4 text-center">
-                  <div className="text-[11px] font-bold text-slate-500">AdFit</div>
-                  <div className="text-sm font-black text-slate-300">지그미 감정 충전 광고 슬롯</div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => showInterstitial("download")} className="rounded-xl bg-white px-4 py-3 font-black text-slate-950">
-                    <i className="fa-solid fa-download mr-2"></i>내 폰에 저장
-                  </button>
-                  <button onClick={() => showInterstitial("share")} className="rounded-xl bg-cyan-300 px-4 py-3 font-black text-slate-950">
-                    <i className="fa-solid fa-share-nodes mr-2"></i>공유하기
-                  </button>
-                </div>
-              </div>
-            </aside>
-          </section>
-
-          <footer className="mx-auto w-full max-w-5xl px-4 pb-5">
-            <a href="https://www.google.com/search?q=%EB%A1%9C%EB%98%90+%EC%82%AC%EC%A3%BC+%ED%96%89%EC%9A%B4+%ED%99%95%EC%9D%B8" target="_blank" rel="noopener noreferrer" className="block rounded-2xl border border-amber-200/30 bg-gradient-to-r from-amber-200 via-pink-200 to-cyan-200 px-4 py-4 text-center font-black text-slate-950 shadow-neon">
-              <i className="fa-solid fa-clover mr-2"></i>로또/사주 행운 확인하기
-            </a>
-          </footer>
-
-          {showSettings && <KeyModal apiKey={apiKey} setApiKey={setApiKey} close={() => setShowSettings(false)} />}
-          {interstitialActive && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 p-5">
-              <div className="w-full max-w-md rounded-3xl border border-fuchsia-300/30 bg-slate-900 p-7 text-center shadow-neon">
-                <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 via-fuchsia-300 to-amber-200 text-4xl font-black text-slate-950">
-                  {interstitialCount > 0 ? interstitialCount : <i className="fa-solid fa-check"></i>}
-                </div>
-                <h2 className="mb-2 text-2xl font-black">카드 받기 대기 중</h2>
-                <p className="mb-4 text-sm text-slate-300">10초 네온 타이머가 끝나야 다운로드가 열립니다.</p>
-                <a href="https://www.google.com/search?q=%EB%A1%9C%EB%98%90+%EC%82%AC%EC%A3%BC+%ED%96%89%EC%9A%B4+%ED%99%95%EC%9D%B8" target="_blank" rel="noopener noreferrer" className="mb-5 block rounded-2xl bg-gradient-to-r from-amber-200 via-pink-200 to-cyan-200 px-4 py-3 font-black text-slate-950">로또/사주 행운 확인하기</a>
-                <div className="mb-5 h-3 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-amber-200" style={{ width: `${((10 - interstitialCount) / 10) * 100}%` }}></div>
-                </div>
-                <button disabled={interstitialCount > 0} onClick={receiveCard} className={`w-full rounded-xl px-4 py-3 font-black ${interstitialCount > 0 ? "bg-white/10 text-slate-500" : "bg-white text-slate-950"}`}>카드 받기</button>
-              </div>
-            </div>
-          )}
-          {showSaveModal && savedCardImage && <SaveModal dataUrl={savedCardImage} onClose={() => setShowSaveModal(false)} />}
-        </main>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+      ReactDOM.createRoot(document.getElementById("root")).render(e(App));
+    };
   </script>
 </body>
 </html>
