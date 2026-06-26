@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>zigme - 지금, 내 감정에 불을 켜다</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Noto Sans KR", "system-ui", "sans-serif"],
+            serif: ["Noto Serif KR", "serif"]
+          },
+          boxShadow: {
+            neon: "0 0 20px rgba(56,189,248,.5), 0 0 54px rgba(244,114,182,.32)"
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #080812; color: white; font-family: "Noto Sans KR", system-ui, sans-serif; }
+    body { overflow-x: hidden; }
+    .glass { background: rgba(15, 23, 42, .74); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(18px); }
+    .soft-grid {
+      background-image:
+        radial-gradient(circle at 20% 12%, rgba(244,114,182,.18), transparent 30%),
+        radial-gradient(circle at 88% 18%, rgba(45,212,191,.16), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(250,204,21,.12), transparent 36%),
+        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size: auto, auto, auto, 42px 42px, 42px 42px;
+    }
+    .neon-ring { position: relative; isolation: isolate; }
+    .neon-ring::before {
+      content: "";
+      position: absolute;
+      inset: -12px;
+      border-radius: 9999px;
+      background: conic-gradient(from 90deg, #22d3ee, #f472b6, #fde047, #34d399, #22d3ee);
+      filter: blur(18px);
+      opacity: .76;
+      z-index: -1;
+      animation: spin 6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.03); filter: brightness(1.14); }
+    }
+    .pulse-glow { animation: pulseGlow 2.8s ease-in-out infinite; }
+    .safe-bottom { padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+  </style>
+</head>
+<body>
+  <div style="opacity:0;pointer-events:none;position:fixed;top:-9999px;left:-9999px;height:0;width:0;overflow:hidden;">
+    <span style="font-family:'Noto Serif KR',serif;">지그미 세리프 폰트 사전 로딩</span>
+    <span style="font-family:'Noto Sans KR',sans-serif;">지그미 산세리프 폰트 사전 로딩</span>
+  </div>
+  <div id="root" style="min-height:100dvh;display:flex;align-items:center;justify-content:center;background:#080812;color:white;font-family:system-ui,sans-serif;">
+    zigme 로딩 중
+  </div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useRef, useState } = window.React;
+
+    const STORAGE_KEY = "zigme_key";
+    const CACHE_KEY = "zigme_recent_text_cache";
+    const COOLDOWN_MS = 30000;
+    const IMAGE_TIMEOUT_MS = 8000;
+
+    const LOCAL_TEMPLATES = [
+      { quote: "지금의 너는 늦은 게 아니라, 정확히 달아오르는 중이야.", subtext: "숨을 고르고 다시 켜지는 카드", prompt: "pastel neon sunrise over quiet city, emotional warmth, cinematic korean mood card" },
+      { quote: "불안은 망했다는 신호가 아니라, 중요한 문 앞에 섰다는 신호야.", subtext: "오늘의 떨림을 연료로", prompt: "soft neon doorway, hopeful atmosphere, pastel blue pink, dreamy light" },
+      { quote: "아무것도 못 한 날에도 너는 버틴 만큼 이미 일을 했다.", subtext: "느린 회복 카드", prompt: "cozy moonlit room, gentle neon lamp, rest and healing, pastel" },
+      { quote: "공허한 마음은 비어 있는 게 아니라, 새 리듬을 기다리는 공간이야.", subtext: "다시 채워질 빈자리", prompt: "minimal pastel neon lake, empty space, calm reflection, elegant" },
+      { quote: "오늘 한 걸음이면 충분해. 불은 작아도 방향을 밝힌다.", subtext: "작은 실행의 불빛", prompt: "single glowing path in pastel neon garden, hopeful cinematic" },
+      { quote: "너의 속도는 느린 게 아니라, 오래 갈 수 있게 조율된 속도야.", subtext: "나만의 박자", prompt: "pastel neon metronome, soft music room, gentle focus" },
+      { quote: "무너진 계획보다 중요한 건, 다시 잡은 손잡이 하나야.", subtext: "리셋 버튼의 밤", prompt: "neon reset button, soft gradient, midnight desk, motivational" },
+      { quote: "지금 켜진 마음 하나면, 오늘은 다시 시작하기에 충분하다.", subtext: "Card ON", prompt: "heart shaped neon light, pastel clouds, clean premium card" }
+    ];
+
+    const MOOD_OPTIONS = [
+      { id: "energy", label: "에너지", icon: "fa-bolt", gradient: "from-amber-200 via-lime-200 to-cyan-200", text: "오늘 네 안의 불씨가 가볍게 튀고 있어." },
+      { id: "burnout", label: "번아웃", icon: "fa-battery-quarter", gradient: "from-rose-200 via-pink-200 to-violet-200", text: "지금은 더 밀기보다 따뜻하게 식힐 때야." },
+      { id: "empty", label: "공허함", icon: "fa-moon", gradient: "from-sky-200 via-indigo-200 to-slate-200", text: "비어 보이는 마음에도 다음 색이 준비 중이야." },
+      { id: "challenge", label: "도전", icon: "fa-mountain-sun", gradient: "from-emerald-200 via-teal-200 to-fuchsia-200", text: "조금 무서운 방향이 오늘의 성장 방향일 수 있어." }
+    ];
+
+    const TARGET_OPTIONS = [
+      { id: "friend", label: "친구·단톡방", icon: "fa-comments", tone: "말랑하고 웃기게" },
+      { id: "family", label: "가족방", icon: "fa-house", tone: "따뜻하고 든든하게" },
+      { id: "work", label: "직장동료", icon: "fa-briefcase", tone: "센스 있고 부담 없게" },
+      { id: "me", label: "나에게", icon: "fa-user-astronaut", tone: "조용하고 깊게" }
+    ];
+
+    function safeJsonParse(raw, fallback) {
+      try { return JSON.parse(raw); } catch (error) { return fallback; }
+    }
+
+    function getRandomTemplate(seedText) {
+      const seed = String(seedText || Date.now());
+      let hash = 0;
+      for (let i = 0; i < seed.length; i += 1) hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+      return LOCAL_TEMPLATES[Math.abs(hash) % LOCAL_TEMPLATES.length];
+    }
+
+    function getSeasonAndTime() {
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const hour = now.getHours();
+      let season = "겨울";
+      if (month >= 3 && month <= 5) season = "봄";
+      if (month >= 6 && month <= 8) season = "여름";
+      if (month >= 9 && month <= 11) season = "가을";
+      let time = "새벽";
+      if (hour >= 6 && hour < 12) time = "아침";
+      if (hour >= 12 && hour < 18) time = "오후";
+      if (hour >= 18 && hour < 23) time = "밤";
+      return { season: season, time: time, hour: hour };
+    }
+
+    function detectInAppBrowser() {
+      const ua = navigator.userAgent.toLowerCase();
+      return /kakaotalk|instagram|fb_iab|fbav|line|naver|daumapps|wv/.test(ua) || (ua.includes("iphone") && !ua.includes("safari"));
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function timeoutPromise(ms) {
+      return new Promise((resolve, reject) => setTimeout(() => reject(new Error("timeout")), ms));
+    }
+
+    async function fetchImageBlobUrl(prompt, seed) {
+      const text = `${prompt}, premium korean emotional quote card background, no text, high detail`;
+      const encoded = encodeURIComponent(text);
+      const url = `https://image.pollinations.ai/prompt/${encoded}?width=1080&height=1350&seed=${encodeURIComponent(seed)}&nologo=true&enhance=true&t=${Date.now()}`;
+      const response = await Promise.race([fetch(url, { cache: "no-store" }), timeoutPromise(IMAGE_TIMEOUT_MS)]);
+      if (!response.ok) throw new Error("image_fetch_failed");
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    }
+
+    function parseGeminiJson(text) {
+      const cleaned = String(text || "").replace(/```json/g, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      if (!parsed.quote || !parsed.subtext) throw new Error("bad_json");
+      return {
+        quote: String(parsed.quote).slice(0, 80),
+        subtext: String(parsed.subtext).slice(0, 44),
+        prompt: parsed.prompt || "pastel neon emotional background, no text"
+      };
+    }
+
+    async function askGemini(apiKey, mood, target, env) {
+      if (!apiKey) throw new Error("missing_key");
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const userPrompt = [
+        `환경: ${env.season} ${env.time}`,
+        `감정: ${mood.label} - ${mood.text}`,
+        `수신 타겟: ${target.label} - ${target.tone}`,
+        "quote는 한국어 44자 이하 명언형 문장으로 작성한다.",
+        "subtext는 한국어 20자 이하 보조 문장으로 작성한다.",
+        "prompt는 영어 이미지 생성 프롬프트로 작성하고 pastel neon emotional background no text를 포함한다."
+      ].join("\n");
+      let lastError = null;
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              systemInstruction: {
+                parts: [{
+                  text: "너는 한국어 감정 카드 카피라이터다. 반드시 JSON 객체 하나만 반환한다. 구조는 {\"quote\":\"문장\",\"subtext\":\"짧은 문장\",\"prompt\":\"english image prompt\"} 이다. markdown, 코드블록, 설명 문장은 금지한다."
+                }]
+              },
+              contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+              generationConfig: {
+                temperature: 0.92,
+                maxOutputTokens: 360,
+                responseMimeType: "application/json"
+              }
+            })
+          });
+          if (!response.ok) {
+            const err = new Error(`gemini_${response.status}`);
+            err.status = response.status;
+            throw err;
+          }
+          const data = await response.json();
+          return parseGeminiJson(data?.candidates?.[0]?.content?.parts?.[0]?.text || "");
+        } catch (error) {
+          lastError = error;
+          const retryable = error.status === 429 || error.status >= 500 || error.name === "TypeError" || String(error.message || "").includes("network");
+          if (!retryable || attempt === 4) break;
+          await sleep(Math.min(8000, 500 * Math.pow(2, attempt)) + Math.floor(Math.random() * 250));
+        }
+      }
+      throw lastError || new Error("gemini_failed");
+    }
+
+    function wrapKoreanText(ctx, text, maxWidth) {
+      const chars = Array.from(text);
+      const lines = [];
+      let line = "";
+      for (let i = 0; i < chars.length; i += 1) {
+        const test = line + chars[i];
+        if (ctx.measureText(test).width > maxWidth && line.length > 0) {
+          lines.push(line.trim());
+          line = chars[i].trimStart();
+        } else {
+          line = test;
+        }
+      }
+      if (line.trim()) lines.push(line.trim());
+      return lines;
+    }
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function drawFallbackBackground(ctx, width, height, seed) {
+      let hash = 0;
+      for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+      const palettes = [
+        ["#f9a8d4", "#a7f3d0", "#bae6fd", "#fde68a"],
+        ["#c4b5fd", "#fbcfe8", "#99f6e4", "#e0f2fe"],
+        ["#fecdd3", "#ddd6fe", "#bbf7d0", "#fef3c7"],
+        ["#bfdbfe", "#f0abfc", "#fed7aa", "#ccfbf1"]
+      ];
+      const colors = palettes[hash % palettes.length];
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0, colors[0]);
+      grad.addColorStop(.34, colors[1]);
+      grad.addColorStop(.68, colors[2]);
+      grad.addColorStop(1, colors[3]);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+      for (let i = 0; i < 22; i += 1) {
+        const x = (hash + i * 127) % width;
+        const y = (hash + i * 313) % height;
+        const r = 90 + ((hash + i * 47) % 180);
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, r);
+        glow.addColorStop(0, "rgba(255,255,255,.4)");
+        glow.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    async function bakeCanvas(card) {
+      if (document.fonts && document.fonts.load) {
+        await Promise.all([
+          document.fonts.load('900 52px "Noto Serif KR"'),
+          document.fonts.load('700 28px "Noto Sans KR"')
+        ]);
+      }
+      const canvas = document.createElement("canvas");
+      const width = 1080;
+      const height = 1350;
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      let imageDrawn = false;
+      if (card.imageObjectUrl) {
+        try {
+          const img = await loadImage(card.imageObjectUrl);
+          const ratio = Math.max(width / img.width, height / img.height);
+          const drawW = img.width * ratio;
+          const drawH = img.height * ratio;
+          ctx.drawImage(img, (width - drawW) / 2, (height - drawH) / 2, drawW, drawH);
+          imageDrawn = true;
+        } catch (error) {
+          imageDrawn = false;
+        }
+      }
+      if (!imageDrawn) drawFallbackBackground(ctx, width, height, card.seed || card.quote);
+      const overlay = ctx.createLinearGradient(0, 0, 0, height);
+      overlay.addColorStop(0, "rgba(8,8,18,.12)");
+      overlay.addColorStop(.5, "rgba(8,8,18,.28)");
+      overlay.addColorStop(1, "rgba(8,8,18,.68)");
+      ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, width, height);
+      ctx.save();
+      ctx.shadowColor = "rgba(255,255,255,.9)";
+      ctx.shadowBlur = 34;
+      ctx.strokeStyle = "rgba(255,255,255,.72)";
+      ctx.lineWidth = 3;
+      roundRect(ctx, 70, 70, width - 140, height - 140, 46);
+      ctx.stroke();
+      ctx.restore();
+      const quoteLength = Array.from(card.quote).length;
+      let fontSize = 52;
+      if (quoteLength > 34) fontSize = 42;
+      if (quoteLength > 50) fontSize = 32;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "rgba(244,114,182,.82)";
+      ctx.shadowBlur = 18;
+      ctx.font = `900 ${fontSize}px "Noto Serif KR", serif`;
+      const lines = wrapKoreanText(ctx, card.quote, 780);
+      const lineHeight = fontSize * 1.48;
+      const startY = height / 2 - ((lines.length - 1) * lineHeight) / 2 - 48;
+      lines.forEach((line, index) => ctx.fillText(line, width / 2, startY + index * lineHeight));
+      ctx.shadowColor = "rgba(34,211,238,.7)";
+      ctx.shadowBlur = 14;
+      ctx.font = '700 30px "Noto Sans KR", sans-serif';
+      ctx.fillText(card.subtext, width / 2, startY + lines.length * lineHeight + 44);
+      ctx.shadowBlur = 0;
+      ctx.font = '800 26px "Noto Sans KR", sans-serif';
+      ctx.fillStyle = "rgba(255,255,255,.88)";
+      ctx.fillText("zigme · Card ON", width / 2, height - 142);
+      return canvas;
+    }
+
+    function dataUrlToBlob(dataUrl) {
+      const parts = dataUrl.split(",");
+      const mime = parts[0].match(/:(.*?);/)[1];
+      const binary = atob(parts[1]);
+      const array = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) array[i] = binary.charCodeAt(i);
+      return new Blob([array], { type: mime });
+    }
+
+    function KeyModal({ apiKey, setApiKey, close }) {
+      const [value, setValue] = useState(apiKey || "");
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-5">
+          <div className="glass w-full max-w-md rounded-2xl p-6 shadow-neon">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-300 text-slate-950">
+                <i className="fa-solid fa-key"></i>
+              </div>
+              <div>
+                <h2 className="text-xl font-black">zigme 시동 키</h2>
+                <p className="text-sm text-slate-300">Gemini API Key를 저장하면 AI 카드가 켜집니다.</p>
+              </div>
+            </div>
+            <input value={value} onChange={(event) => setValue(event.target.value)} type="password" placeholder="Gemini API Key" className="mb-3 w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white outline-none focus:border-cyan-300" />
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  const trimmed = value.trim();
+                  if (trimmed) {
+                    localStorage.setItem(STORAGE_KEY, trimmed);
+                    setApiKey(trimmed);
+                  }
+                  close();
+                }}
+                className="rounded-xl bg-cyan-300 px-4 py-3 font-black text-slate-950"
+              >
+                저장하고 켜기
+              </button>
+              <button onClick={close} className="rounded-xl bg-white/10 px-4 py-3 font-bold text-slate-200">로컬로 시작</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function SaveModal({ dataUrl, onClose }) {
+      return (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 p-4">
+          <div className="mx-auto max-w-sm pb-8 pt-5 text-center">
+            <h2 className="mb-2 text-xl font-black">길게 꾹 눌러서 내 앨범에 저장</h2>
+            <p className="mb-4 text-sm text-slate-300">카톡과 인스타 인앱 브라우저에서는 이미지 팝업 저장이 가장 안정적입니다.</p>
+            <img src={dataUrl} alt="저장할 zigme 카드" className="mb-4 w-full rounded-2xl border border-white/20 shadow-neon" />
+            <button onClick={onClose} className="w-full rounded-xl bg-white px-4 py-3 font-black text-slate-950">닫기</button>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const cached = safeJsonParse(localStorage.getItem(CACHE_KEY), null);
+      const initialTemplate = cached && cached.quote && cached.subtext ? cached : getRandomTemplate("initial");
+      const [activeTab, setActiveTab] = useState("delivery");
+      const [apiKey, setApiKey] = useState(() => localStorage.getItem(STORAGE_KEY) || "");
+      const [showSettings, setShowSettings] = useState(() => !localStorage.getItem(STORAGE_KEY));
+      const [quote, setQuote] = useState(initialTemplate.quote);
+      const [subtext, setSubtext] = useState(initialTemplate.subtext);
+      const [imageUrl, setImageUrl] = useState("");
+      const [imageLoaded, setImageLoaded] = useState(false);
+      const [isGenerating, setIsGenerating] = useState(false);
+      const [interstitialActive, setInterstitialActive] = useState(false);
+      const [interstitialCount, setInterstitialCount] = useState(10);
+      const [savedCardImage, setSavedCardImage] = useState("");
+      const [showSaveModal, setShowSaveModal] = useState(false);
+      const [toastMsg, setToastMsg] = useState("");
+      const [selectedMood, setSelectedMood] = useState(MOOD_OPTIONS[0]);
+      const [selectedTarget, setSelectedTarget] = useState(TARGET_OPTIONS[3]);
+      const [cooldownUntil, setCooldownUntil] = useState(0);
+      const [nowTick, setNowTick] = useState(Date.now());
+      const [sourceLabel, setSourceLabel] = useState(cached && cached.quote ? "Cache ON" : "Local ON");
+      const previewCanvasRef = useRef(null);
+      const seedRef = useRef("initial");
+      const promptRef = useRef(initialTemplate.prompt || "pastel neon emotional quote card background, no text");
+      const interstitialActionRef = useRef("download");
+      const env = useMemo(() => getSeasonAndTime(), [nowTick]);
+      const isCooldown = cooldownUntil > nowTick;
+      const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - nowTick) / 1000));
+      const cooldownProgress = isCooldown ? Math.max(0, Math.min(100, ((COOLDOWN_MS - (cooldownUntil - nowTick)) / COOLDOWN_MS) * 100)) : 100;
+      const currentCard = useMemo(() => ({
+        quote: quote,
+        subtext: subtext,
+        imageObjectUrl: imageUrl,
+        seed: seedRef.current,
+        prompt: promptRef.current
+      }), [quote, subtext, imageUrl]);
+
+      useEffect(() => {
+        const timer = setInterval(() => setNowTick(Date.now()), 500);
+        return () => clearInterval(timer);
+      }, []);
+
+      useEffect(() => {
+        if (!interstitialActive || interstitialCount <= 0) return undefined;
+        const timer = setTimeout(() => setInterstitialCount((value) => Math.max(0, value - 1)), 1000);
+        return () => clearTimeout(timer);
+      }, [interstitialActive, interstitialCount]);
+
+      useEffect(() => {
+        let cancelled = false;
+        async function renderPreview() {
+          if (!previewCanvasRef.current || !quote) return;
+          try {
+            const baked = await bakeCanvas(currentCard);
+            if (cancelled) return;
+            const canvas = previewCanvasRef.current;
+            canvas.width = 540;
+            canvas.height = 675;
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(baked, 0, 0, canvas.width, canvas.height);
+          } catch (error) {
+            console.error(error);
+          }
+        }
+        renderPreview();
+        return () => { cancelled = true; };
+      }, [currentCard, quote]);
+
+      useEffect(() => {
+        return () => {
+          if (imageUrl) URL.revokeObjectURL(imageUrl);
+        };
+      }, [imageUrl]);
+
+      function cacheTextOnly(nextQuote, nextSubtext) {
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ quote: nextQuote, subtext: nextSubtext }));
+        } catch (error) {
+          if (error && error.name === "QuotaExceededError") localStorage.removeItem(CACHE_KEY);
+        }
+      }
+
+      async function generateCard(reason) {
+        if (isCooldown || isGenerating) {
+          setToastMsg("30초 쿨다운이 끝나면 다시 구울 수 있어요.");
+          return;
+        }
+        setIsGenerating(true);
+        setToastMsg("");
+        setImageLoaded(false);
+        const seed = `${Date.now()}-${selectedMood.id}-${selectedTarget.id}-${reason}`;
+        let nextText = null;
+        try {
+          nextText = await askGemini(apiKey, selectedMood, selectedTarget, env);
+          setSourceLabel("Gemini ON");
+        } catch (error) {
+          const local = getRandomTemplate(seed);
+          nextText = { quote: local.quote, subtext: `${selectedMood.label} · ${selectedTarget.label}`, prompt: local.prompt };
+          setSourceLabel("Local ON");
+          setToastMsg("API 키 없음 또는 통신 장애로 로컬 프리셋을 적용했어요.");
+        }
+        let nextImageUrl = "";
+        try {
+          nextImageUrl = await fetchImageBlobUrl(nextText.prompt, seed);
+        } catch (error) {
+          nextImageUrl = "";
+          setImageLoaded(true);
+        }
+        setImageUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return nextImageUrl;
+        });
+        seedRef.current = seed;
+        promptRef.current = nextText.prompt;
+        setQuote(nextText.quote);
+        setSubtext(nextText.subtext);
+        cacheTextOnly(nextText.quote, nextText.subtext);
+        setCooldownUntil(Date.now() + COOLDOWN_MS);
+        setIsGenerating(false);
+      }
+
+      async function prepareDataUrl() {
+        const canvas = await bakeCanvas(currentCard);
+        return canvas.toDataURL("image/png");
+      }
+
+      function showInterstitial(action) {
+        interstitialActionRef.current = action;
+        setInterstitialCount(10);
+        setInterstitialActive(true);
+      }
+
+      async function receiveCard() {
+        if (interstitialCount > 0) return;
+        const action = interstitialActionRef.current;
+        setInterstitialActive(false);
+        const dataUrl = await prepareDataUrl();
+        setSavedCardImage(dataUrl);
+        if (action === "download") {
+          if (detectInAppBrowser()) {
+            setShowSaveModal(true);
+            return;
+          }
+          const link = document.createElement("a");
+          link.href = dataUrl;
+          link.download = `zigme-card-${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        }
+        if (action === "share") {
+          const blob = dataUrlToBlob(dataUrl);
+          const file = new File([blob], `zigme-card-${Date.now()}.png`, { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+            await navigator.share({ title: "zigme Card ON", text: quote, files: [file] });
+          } else if (detectInAppBrowser()) {
+            setShowSaveModal(true);
+          } else {
+            if (navigator.clipboard) await navigator.clipboard.writeText(`${quote}\n${subtext}\nzigme Card ON`);
+            setToastMsg("공유 문구를 클립보드에 복사했어요.");
+          }
+        }
+      }
+
+      const tabs = [
+        { id: "delivery", label: "지그미 배달", icon: "fa-fire-flame-curved" },
+        { id: "signal", label: "지금 신호등", icon: "fa-traffic-light" },
+        { id: "talk", label: "톡방 덕담", icon: "fa-paper-plane" },
+        { id: "assistant", label: "실시간 비서", icon: "fa-satellite-dish" }
+      ];
+
+      return (
+        <main className="soft-grid min-h-[100dvh] safe-bottom flex flex-col">
+          <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pb-3 pt-5">
+            <div>
+              <h1 className="text-2xl font-black tracking-normal">zigme</h1>
+              <p className="text-xs font-medium text-cyan-100/80">지금, 내 감정에 불을 켜다 · Card ON</p>
+            </div>
+            <button onClick={() => setShowSettings(true)} className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-bold">
+              <i className="fa-solid fa-key mr-2"></i>{apiKey ? "키 저장됨" : "API Key"}
+            </button>
+          </header>
+
+          <section className="mx-auto grid w-full max-w-5xl flex-1 gap-4 px-4 pb-4 lg:grid-cols-[1fr_390px]">
+            <div className="flex flex-col gap-4">
+              <nav className="grid grid-cols-4 gap-2 rounded-2xl bg-black/25 p-2">
+                {tabs.map((tab) => (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`rounded-xl px-2 py-3 text-xs font-black transition ${activeTab === tab.id ? "bg-white text-slate-950 shadow-neon" : "bg-white/5 text-slate-300"}`}>
+                    <i className={`fa-solid ${tab.icon} mb-1 block text-base`}></i>
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+
+              <div className="glass flex min-h-[360px] flex-col rounded-3xl p-5">
+                {activeTab === "delivery" && (
+                  <div className="flex flex-1 flex-col items-center justify-center text-center">
+                    <button disabled={isGenerating || isCooldown} onClick={() => generateCard("delivery")} className={`neon-ring pulse-glow flex h-56 w-56 items-center justify-center rounded-full bg-slate-950 p-6 text-center text-2xl font-black leading-tight shadow-neon ${isGenerating || isCooldown ? "opacity-70" : ""}`}>
+                      {isGenerating ? "카드 굽는 중" : "지금 내 카드 굽기 ⚡"}
+                    </button>
+                    <p className="mt-7 text-sm text-slate-300">Gemini 장애와 429는 로컬 프리셋으로 즉시 우회합니다.</p>
+                  </div>
+                )}
+
+                {activeTab === "signal" && (
+                  <div>
+                    <h2 className="mb-4 text-xl font-black">지금 네 마음에 켜진 신호등은?</h2>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {MOOD_OPTIONS.map((mood) => (
+                        <button key={mood.id} onClick={() => setSelectedMood(mood)} className={`rounded-2xl bg-gradient-to-br ${mood.gradient} p-4 text-left text-slate-950 ring-2 ${selectedMood.id === mood.id ? "ring-white" : "ring-transparent"}`}>
+                          <i className={`fa-solid ${mood.icon} mb-4 text-2xl`}></i>
+                          <div className="text-lg font-black">{mood.label}</div>
+                          <div className="mt-1 text-sm font-bold opacity-80">{mood.text}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "talk" && (
+                  <div>
+                    <h2 className="mb-4 text-xl font-black">이 카드를 어디로 던질까?</h2>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {TARGET_OPTIONS.map((target) => (
+                        <button key={target.id} onClick={() => setSelectedTarget(target)} className={`rounded-2xl border p-4 text-left transition ${selectedTarget.id === target.id ? "border-fuchsia-200 bg-fuchsia-200 text-slate-950" : "border-white/15 bg-white/10 text-white"}`}>
+                          <i className={`fa-solid ${target.icon} mb-4 text-2xl`}></i>
+                          <div className="text-lg font-black">{target.label}</div>
+                          <div className="mt-1 text-sm font-bold opacity-80">{target.tone}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "assistant" && (
+                  <div className="flex flex-1 flex-col justify-center">
+                    <h2 className="mb-4 text-xl font-black">실시간 비서</h2>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl bg-white/10 p-4">
+                        <div className="text-xs text-slate-400">계절</div>
+                        <div className="mt-1 text-2xl font-black">{env.season}</div>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-4">
+                        <div className="text-xs text-slate-400">시간대</div>
+                        <div className="mt-1 text-2xl font-black">{env.time}</div>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-4">
+                        <div className="text-xs text-slate-400">동기화</div>
+                        <div className="mt-1 text-2xl font-black">{env.hour}시</div>
+                      </div>
+                    </div>
+                    <button onClick={() => generateCard("assistant")} disabled={isGenerating || isCooldown} className="mt-5 rounded-2xl bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-amber-200 px-5 py-4 font-black text-slate-950">현재 환경으로 카드 다시 맞추기</button>
+                  </div>
+                )}
+
+                {isCooldown && (
+                  <div className="mt-5">
+                    <div className="mb-2 flex justify-between text-xs font-bold text-slate-300">
+                      <span>Gemini 429 방어 쿨다운</span>
+                      <span>{cooldownLeft}초</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full rounded-full bg-cyan-300" style={{ width: `${cooldownProgress}%` }}></div>
+                    </div>
+                  </div>
+                )}
+                {toastMsg && <div className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold text-cyan-100">{toastMsg}</div>}
+              </div>
+            </div>
+
+            <aside className="flex flex-col">
+              <div className="glass rounded-3xl p-3">
+                <div className="mb-3 flex items-center justify-between px-1">
+                  <div>
+                    <div className="text-xs font-bold text-slate-400">RESULT CARD</div>
+                    <div className="text-sm font-black">{sourceLabel} · {imageLoaded || !imageUrl ? "Image Ready" : "Image Loading"}</div>
+                  </div>
+                  <div className="rounded-full bg-emerald-300 px-3 py-1 text-xs font-black text-slate-950">LIVE</div>
+                </div>
+                <canvas ref={previewCanvasRef} className="aspect-[4/5] w-full rounded-2xl bg-slate-900"></canvas>
+                {imageUrl && <img src={imageUrl} crossOrigin="anonymous" onLoad={() => setImageLoaded(true)} onError={() => setImageLoaded(true)} alt="Pollinations Blob 캐시 배경" className="sr-only" />}
+                <div className="my-3 rounded-2xl bg-gray-900/50 py-4 text-center">
+                  <div className="text-[11px] font-bold text-slate-500">AdFit</div>
+                  <div className="text-sm font-black text-slate-300">지그미 감정 충전 광고 슬롯</div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => showInterstitial("download")} className="rounded-xl bg-white px-4 py-3 font-black text-slate-950">
+                    <i className="fa-solid fa-download mr-2"></i>내 폰에 저장
+                  </button>
+                  <button onClick={() => showInterstitial("share")} className="rounded-xl bg-cyan-300 px-4 py-3 font-black text-slate-950">
+                    <i className="fa-solid fa-share-nodes mr-2"></i>공유하기
+                  </button>
+                </div>
+              </div>
+            </aside>
+          </section>
+
+          <footer className="mx-auto w-full max-w-5xl px-4 pb-5">
+            <a href="https://www.google.com/search?q=%EB%A1%9C%EB%98%90+%EC%82%AC%EC%A3%BC+%ED%96%89%EC%9A%B4+%ED%99%95%EC%9D%B8" target="_blank" rel="noopener noreferrer" className="block rounded-2xl border border-amber-200/30 bg-gradient-to-r from-amber-200 via-pink-200 to-cyan-200 px-4 py-4 text-center font-black text-slate-950 shadow-neon">
+              <i className="fa-solid fa-clover mr-2"></i>로또/사주 행운 확인하기
+            </a>
+          </footer>
+
+          {showSettings && <KeyModal apiKey={apiKey} setApiKey={setApiKey} close={() => setShowSettings(false)} />}
+          {interstitialActive && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 p-5">
+              <div className="w-full max-w-md rounded-3xl border border-fuchsia-300/30 bg-slate-900 p-7 text-center shadow-neon">
+                <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 via-fuchsia-300 to-amber-200 text-4xl font-black text-slate-950">
+                  {interstitialCount > 0 ? interstitialCount : <i className="fa-solid fa-check"></i>}
+                </div>
+                <h2 className="mb-2 text-2xl font-black">카드 받기 대기 중</h2>
+                <p className="mb-4 text-sm text-slate-300">10초 네온 타이머가 끝나야 다운로드가 열립니다.</p>
+                <a href="https://www.google.com/search?q=%EB%A1%9C%EB%98%90+%EC%82%AC%EC%A3%BC+%ED%96%89%EC%9A%B4+%ED%99%95%EC%9D%B8" target="_blank" rel="noopener noreferrer" className="mb-5 block rounded-2xl bg-gradient-to-r from-amber-200 via-pink-200 to-cyan-200 px-4 py-3 font-black text-slate-950">로또/사주 행운 확인하기</a>
+                <div className="mb-5 h-3 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-amber-200" style={{ width: `${((10 - interstitialCount) / 10) * 100}%` }}></div>
+                </div>
+                <button disabled={interstitialCount > 0} onClick={receiveCard} className={`w-full rounded-xl px-4 py-3 font-black ${interstitialCount > 0 ? "bg-white/10 text-slate-500" : "bg-white text-slate-950"}`}>카드 받기</button>
+              </div>
+            </div>
+          )}
+          {showSaveModal && savedCardImage && <SaveModal dataUrl={savedCardImage} onClose={() => setShowSaveModal(false)} />}
+        </main>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
