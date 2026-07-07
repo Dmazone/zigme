@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "zigme",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-06-29",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "placement": {
+    "region": "gcp:us-central1"
+  },
+  "secrets": {
+    "required": ["GEMINI_API_KEY"]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}
