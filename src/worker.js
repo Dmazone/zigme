@@ -62,7 +62,7 @@ async function handleGemini(request, env) {
     systemInstruction: {
       parts: [
         {
-          text: '너는 한국어 감정 카드 카피라이터다. 반드시 JSON 객체 하나만 반환한다. 구조는 {"quote":"문장","subtext":"짧은 문장","prompt":"english image prompt"} 이다. markdown, 코드블록, 설명 문장은 금지한다.',
+          text: '너는 어르신들이 카카오톡으로 주고받는 한국어 인사 카드 문구 작성자다. 톤은 근엄하지만 살짝 웃긴 병맛 덕담이다. 반드시 JSON 객체 하나만 반환한다. 구조는 {"quote":"문장","subtext":"짧은 문장","prompt":"english image prompt"} 이다. markdown, 코드블록, 설명 문장은 금지한다.',
         },
       ],
     },
@@ -76,9 +76,9 @@ async function handleGemini(request, env) {
               `감정: ${mood.label} - ${mood.text}`,
               `수신 타겟: ${target.label} - ${target.tone}`,
               "아주 짧게 답한다. JSON 값 외의 긴 설명은 절대 쓰지 않는다.",
-              "quote는 한국어 44자 이하 명언형 문장으로 작성한다.",
-              "subtext는 한국어 20자 이하 보조 문장으로 작성한다.",
-              "prompt는 영어 25단어 이하 이미지 프롬프트로 작성하고 pastel neon emotional background no text를 포함한다.",
+              "quote는 한국어 44자 이하의 새해 인사, 안부 인사, 건강 덕담처럼 작성한다.",
+              "subtext는 한국어 20자 이하로 어른들이 보낼 법한 짧은 축원으로 작성한다.",
+              "prompt는 영어 25단어 이하로 old low resolution digital greeting card, flowers, birds, pixel glitter, no text를 포함한다.",
             ].join("\n"),
           },
         ],
